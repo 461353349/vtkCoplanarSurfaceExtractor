@@ -1,3 +1,4 @@
+
 //////boolean intersection operation on coplanar regions of two polydata meshes
 //////idea and implementation by Roman Grothausmann
 
@@ -83,22 +84,22 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     //verbose=1;
 
 
-    vtkTriangleFilter *triangulate0= vtkTriangleFilter::New(); //converts vtkPolyLine to vtkLine
+    vtkSmartPointer< vtkTriangleFilter> triangulate0= vtkSmartPointer<vtkTriangleFilter>::New(); //converts vtkPolyLine to vtkLine
     triangulate0->SetInputData(input0);
     triangulate0->PassLinesOff();//Very important because cells of type vtkLine in the output confuses vtkPolyDataNormals with ComputeCellNormalsOn!!! If it is off, then the input lines will be ignored and the output will have no lines. //causes this error in paraview or dumpXML: vtkXMLPolyDataReader (0x2370350): Cannot read cell data array "Normals" from PointData in piece 0.  The data array in the element may be too short.
 
 
-    vtkTriangleFilter *triangulate1= vtkTriangleFilter::New(); //converts vtkPolyLine to vtkLine
+    vtkSmartPointer<vtkTriangleFilter> triangulate1= vtkSmartPointer<vtkTriangleFilter>::New(); //converts vtkPolyLine to vtkLine
     triangulate1->SetInputData(input1);
     triangulate1->PassLinesOff();
 
-    vtkPolyDataNormals *PDnormals0= vtkPolyDataNormals::New();
+    vtkSmartPointer<vtkPolyDataNormals> PDnormals0= vtkSmartPointer<vtkPolyDataNormals>::New();
     PDnormals0->SetInputConnection(triangulate0->GetOutputPort());
     PDnormals0->ComputePointNormalsOff(); 
     PDnormals0->ComputeCellNormalsOn();
     PDnormals0->Update();
 
-    vtkPolyDataNormals *PDnormals1= vtkPolyDataNormals::New();
+    vtkSmartPointer<vtkPolyDataNormals> PDnormals1= vtkSmartPointer<vtkPolyDataNormals>::New();
     PDnormals1->SetInputConnection(triangulate1->GetOutputPort());
     PDnormals1->ComputePointNormalsOff(); 
     PDnormals1->ComputeCellNormalsOn();
@@ -126,7 +127,7 @@ int vtkCoplanarSurfaceExtractor::RequestData(
             std::cerr << "There are " << normals0->GetNumberOfTuples() << " normals in normals0." << std::endl;
         }
     else {
-        std::cerr << "No normals in normals0! Aborting." << std::endl;
+        vtkErrorMacro(<< "No normals in normals0! Aborting.");
         exit(1);
         }
         
@@ -135,15 +136,16 @@ int vtkCoplanarSurfaceExtractor::RequestData(
             std::cerr << "There are " << normals1->GetNumberOfTuples() << " normals in normals1." << std::endl;
         }
     else {
-        std::cerr << "No normals in normals1! Aborting." << std::endl;
+        vtkErrorMacro(<< "No normals in normals1! Aborting.");
         exit(1);
         }
         
 
 
     vtkSmartPointer<vtkAppendPolyData> appendPD= vtkSmartPointer<vtkAppendPolyData>::New();
-    vtkPolyData *empty_mesh= vtkPolyData::New();
-    appendPD->AddInputData(empty_mesh);
+    ////needed for disjunct sets??? test!!!
+    // vtkSmartPointer<vtkPolyData> empty_mesh= vtkSmartPointer<vtkPolyData>::New();
+    // appendPD->AddInputData(empty_mesh);
 
     vtkIdType counter= 0;
 

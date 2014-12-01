@@ -1,0 +1,12 @@
+
+
+todo:
+
+- convert code to use smart-pointers everywhere
+- create test tasks in cmake
+-- run tests
+- add (optimization for big meshes) option to just run on "distance output" as shown in the particle example
+- add verbose-option or remove verbose: vtkDebugMacro(
+- add progress report
+- clean-up
+
