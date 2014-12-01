@@ -73,15 +73,8 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     vtkPolyData *output = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
 
-
-    if(this->MeshMode== VTK_USE_DELAUNAY2D)
-	std::cerr << "Using vtkDelaunay2D." << std::endl;
-    else
-	std::cerr << "Using vtkConvexHull2D." << std::endl; 
-
-
     int verbose;
-    //verbose=1;
+    verbose=0;
 
 
     vtkSmartPointer< vtkTriangleFilter> triangulate0= vtkSmartPointer<vtkTriangleFilter>::New(); //converts vtkPolyLine to vtkLine
@@ -353,9 +346,15 @@ int vtkCoplanarSurfaceExtractor::RequestData(
                     }
 
                 }//coplanar cells
+            //// progress | abort
 	    counter++;
-	    if(!(j%10000))
-                printf("\r#c0: %9lld, #c1: %9lld; %6.2f%%", i, j, (counter)*100.0/(N0*N1));
+	    if(!(j%10000)){
+                //printf("\r#c0: %9lld, #c1: %9lld; %6.2f%%", i, j, (counter)*100.0/(N0*N1));
+                this->UpdateProgress(counter/N0/N1);
+                if (this->GetAbortExecute())
+                    break;
+                }
+
             }//cell1
         }//cell0
     printf("\n");

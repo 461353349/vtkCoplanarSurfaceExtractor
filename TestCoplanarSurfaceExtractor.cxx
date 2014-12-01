@@ -6,23 +6,27 @@
 #include <vtkXMLPolyDataReader.h>
 #include <vtkXMLPolyDataWriter.h>
 
+//for ProgressFunction(
+#include <vtkCallbackCommand.h>
+#include <vtkCommand.h>
+
 
 #include "vtkCoplanarSurfaceExtractor.h"
 
 
-// class vtkProgressCommand : public vtkCommand
-// {
-// public:
-//   static vtkProgressCommand *New(){
-//     return new vtkProgressCommand;
-//   }
 
-//   virtual void Execute(vtkObject *caller, unsigned long, void *callData){
-//     double progress = *(static_cast<double*>(callData));
-//     fprintf(stderr, "\rFilter progress: %5.1f\n", 100.0 * progress);
-//     std::cerr.flush();
-//   }
-// };
+#define P_VERBOSE 1
+
+#define VTK_CREATE(type, name) vtkSmartPointer<type> name = vtkSmartPointer<type>::New()
+
+
+void ProgressFunction( vtkObject* caller, long unsigned int eventId, void* clientData, void* callData ){
+  vtkAlgorithm *d= static_cast<vtkAlgorithm*>(caller);
+  //if(P_VERBOSE) fprintf(stderr, "\rFilter progress: %5.1f%%", 100.0 * d->GetProgress());
+  if(P_VERBOSE) fprintf(stderr, "Filter progress: %5.1f%%\n", 100.0 * d->GetProgress());
+  if(P_VERBOSE) std::cerr.flush(); //not needed for cerr?!
+}
+
 
 
 int main(int argc, char* argv[]){
@@ -55,6 +59,11 @@ int main(int argc, char* argv[]){
 	return -1;
 	}
 
+
+    VTK_CREATE(vtkCallbackCommand, progressCallback);
+    progressCallback->SetCallback(ProgressFunction);
+
+
     double d_tol= atof(argv[4]);
     double f_tol= atof(argv[5]);
     double l_tol= f_tol; //for now let face-tol == line-tol
@@ -84,13 +93,15 @@ int main(int argc, char* argv[]){
 
     if(atoi(argv[6]))
         filter->SetMeshMode(VTK_USE_DELAUNAY2D);
-   else
+    else
         filter->SetMeshMode(VTK_USE_CONVEXHULL2D);
 
 
-    filter->Print(std::cerr);
+    if(P_VERBOSE) filter->AddObserver(vtkCommand::ProgressEvent, progressCallback);
+    if(P_VERBOSE) filter->Print(std::cerr);
     filter->Update();
-    
+    if(P_VERBOSE) std::cout  << std::endl << "done." << std::endl;
+
     vtkSmartPointer<vtkXMLPolyDataWriter> Pwriter = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
  
     Pwriter->SetFileName(argv[3]);
