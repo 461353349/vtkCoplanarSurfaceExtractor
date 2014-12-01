@@ -22,8 +22,7 @@
 
 void ProgressFunction( vtkObject* caller, long unsigned int eventId, void* clientData, void* callData ){
   vtkAlgorithm *d= static_cast<vtkAlgorithm*>(caller);
-  //if(P_VERBOSE) fprintf(stderr, "\rFilter progress: %5.1f%%", 100.0 * d->GetProgress());
-  if(P_VERBOSE) fprintf(stderr, "Filter progress: %5.1f%%\n", 100.0 * d->GetProgress());
+  if(P_VERBOSE) fprintf(stderr, "\rFilter progress: %5.1f%%", 100.0 * d->GetProgress());
   if(P_VERBOSE) std::cerr.flush(); //not needed for cerr?!
 }
 
@@ -100,7 +99,7 @@ int main(int argc, char* argv[]){
     if(P_VERBOSE) filter->AddObserver(vtkCommand::ProgressEvent, progressCallback);
     if(P_VERBOSE) filter->Print(std::cerr);
     filter->Update();
-    if(P_VERBOSE) std::cout  << std::endl << "done." << std::endl;
+    if(P_VERBOSE) std::cerr  << std::endl << "done." << std::endl;
 
     vtkSmartPointer<vtkXMLPolyDataWriter> Pwriter = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
  

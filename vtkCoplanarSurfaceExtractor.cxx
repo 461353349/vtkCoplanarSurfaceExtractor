@@ -350,14 +350,14 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 	    counter++;
 	    if(!(j%10000)){
                 //printf("\r#c0: %9lld, #c1: %9lld; %6.2f%%", i, j, (counter)*100.0/(N0*N1));
-                this->UpdateProgress(counter/N0/N1);
+                this->UpdateProgress(static_cast<double>(counter)/N0/N1);
                 if (this->GetAbortExecute())
                     break;
                 }
 
             }//cell1
         }//cell0
-    printf("\n");
+
     vtkSmartPointer<vtkGeometryFilter> usg2poly2= vtkSmartPointer<vtkGeometryFilter>::New();
     usg2poly2->SetInputConnection(appendPD->GetOutputPort());
 
