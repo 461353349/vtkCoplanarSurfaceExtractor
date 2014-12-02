@@ -66,6 +66,7 @@ private:
   double angle_in_deg(double a0[3], double a1[3], double b0[3], double b1[3]);
   double angle_in_deg_unori(double a[3], double b[3]);
   double angle_in_deg_unori(double a0[3], double a1[3], double b0[3], double b1[3]);
+  int coplanar_check(double n0[3], double n1[3], double p0[3], double p1[3], double ft, double dt);
   int point_in_both_cells(double p0[3], vtkCell *cell0, vtkCell *cell1, double d_tol);
   void z_normal_of_3points(double a0[3], double a1[3], double a2[3], double n[3], double &angle, double N[3]);
 

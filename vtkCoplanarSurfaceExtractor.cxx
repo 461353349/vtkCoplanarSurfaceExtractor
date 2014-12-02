@@ -156,12 +156,19 @@ int vtkCoplanarSurfaceExtractor::RequestData(
                 continue;
                 }
 
+	    //////cells are coplanar, if the containing planes are identical, i.e. are parallel and have the same displacement from origin
 	    ////check if cells are nearly parallel using face-tollerance (this->FaceOrientationTolerance)
-            double a=angle_in_deg_unori(normals0->GetTuple(i), normals1->GetTuple(j));
-            vtkDebugMacro(<< "Angle: " << a);
+            // double a=angle_in_deg_unori(normals0->GetTuple(i), normals1->GetTuple(j));
+            // vtkDebugMacro(<< "Angle: " << a);
 
+	    ////check if containing planes have similar displacement from origin
+	    // double pd= plane_displacement_difference(normals0->GetTuple(i), normals1->GetTuple(j));
+
+	    ////if faces are nearly coplanar:
+            if (coplanar_check(normals0->GetTuple(i), normals1->GetTuple(j), cell0->GetPoints()->GetPoint(0), cell1->GetPoints()->GetPoint(0), this->FaceOrientationTolerance, this->DistanceTolerance)){
+	    
 	    ////if faces are nearly parallel:
-            if (a <= this->FaceOrientationTolerance){
+            //if (a <= this->FaceOrientationTolerance){
                 ////find intersections of edges -> add to out point list
                 vtkIdType m0= cell0->GetNumberOfEdges();
                 vtkIdType m1= cell1->GetNumberOfEdges();
@@ -189,13 +196,12 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 
 		vtkSmartPointer<vtkMergePoints> mergePoints =  vtkSmartPointer<vtkMergePoints>::New();
 		mergePoints->SetDataSet(point_pd);
-		mergePoints->SetDivisions(10,10,10);
-		//mergePoints->InitPointInsertion(point_pd->GetPoints(), point_pd->GetBounds());
-		mergePoints->InitPointInsertion(point_pd->GetPoints(), mesh0->GetBounds()); //either mesh0->GetBounds() or mesh1->GetBounds() should do as no points from outside the intersection of mesh0 and mesh1 should appear!
+		const int divisions= 0;//the smaller, the faster
+		mergePoints->SetDivisions(divisions, divisions, divisions);//docs do not explain what this is for, big speedup!!!
+		mergePoints->InitPointInsertion(point_pd->GetPoints(), cell0->GetBounds());
 
 
                 vtkDebugMacro(<< "Checking intersections... ");
-		////so far no check for coplanarity, this could speed up the filter quite a bit for e.g. marching cubes surfaces.
                 for (vtkIdType k= 0; k < m0; k++){
                     edge0= cell0->GetEdge(k);
                     for (vtkIdType l= 0; l < m1; l++){
@@ -239,7 +245,7 @@ int vtkCoplanarSurfaceExtractor::RequestData(
                 ////if we have at least 3 points: create polygon-cell -> add to out cell list
                 if(point_pd->GetPoints()->GetNumberOfPoints() >= 3){
                     
-                    //////points have to lie in xy-plane to consistently perform a correct delaunay
+                    //////points have to lie in xy-plane to consistently perform a correct delaunay or convex-hull
                     ////calc N from points
                     
                     double n[3];
@@ -423,6 +429,26 @@ double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(double a0[3], double a1[3
         return(t);
     }
 
+int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], double p0[3], double p1[3], double ft, double dt){
+    //////(planar) polygons are coplanar, if the containing planes are identical, 
+    //////i.e. are parallel and have the same displacement from origin
+
+    ////check if cells are nearly parallel using face-tollerance
+    vtkMath::Normalize(n0);
+    vtkMath::Normalize(n1);
+    double t=acos(vtkMath::Dot(n0, n1))*180/vtkMath::Pi();
+    if(t >= 90)
+        t=180-t;
+ 
+    ////check if containing planes have similar displacement from origin using displacement-tolerance
+    ////any point in the plane projected on the plane-normal will yield the plane-origin displacement
+    double dd= vtkMath::Dot(n0, p0) - vtkMath::Dot(n1, p1);
+    
+    if((t < ft) && (dd < dt))
+	return 1;
+    else
+	return 0;
+    }
 
 int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell0, vtkCell *cell1, double d_tol){
   double closestPoint[3];

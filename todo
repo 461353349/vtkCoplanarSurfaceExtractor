@@ -7,4 +7,6 @@ todo:
 - add (optimization for big meshes) option to just run on "distance output" as shown in the particle example
 - add verbose-option or remove verbose: vtkDebugMacro(
 - clean-up
-
+- comment vtkMath::Normalize if vtkNormalFilter already does normalization
+- introduce ShallowCopy for appending
+- check vtkConvexHull2D without modified CMakeList.txt
