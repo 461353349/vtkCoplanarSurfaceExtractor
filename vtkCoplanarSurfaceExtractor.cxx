@@ -46,6 +46,8 @@ vtkStandardNewMacro(vtkCoplanarSurfaceExtractor);
 
 vtkCoplanarSurfaceExtractor::vtkCoplanarSurfaceExtractor(){
 
+
+    vtkDebugMacro(<<"Constructor called")
     this->SetNumberOfInputPorts(2);
 
     this->DistanceTolerance= 0.001;
@@ -73,14 +75,9 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     vtkPolyData *output = vtkPolyData::SafeDownCast(outInfo->Get(vtkDataObject::DATA_OBJECT()));
 
 
-    int verbose;
-    verbose=0;
-
-
     vtkSmartPointer< vtkTriangleFilter> triangulate0= vtkSmartPointer<vtkTriangleFilter>::New(); //converts vtkPolyLine to vtkLine
     triangulate0->SetInputData(input0);
     triangulate0->PassLinesOff();//Very important because cells of type vtkLine in the output confuses vtkPolyDataNormals with ComputeCellNormalsOn!!! If it is off, then the input lines will be ignored and the output will have no lines. //causes this error in paraview or dumpXML: vtkXMLPolyDataReader (0x2370350): Cannot read cell data array "Normals" from PointData in piece 0.  The data array in the element may be too short.
-
 
     vtkSmartPointer<vtkTriangleFilter> triangulate1= vtkSmartPointer<vtkTriangleFilter>::New(); //converts vtkPolyLine to vtkLine
     triangulate1->SetInputData(input1);
@@ -101,13 +98,10 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     vtkPolyData *mesh0= PDnormals0->GetOutput(); 
     vtkPolyData *mesh1= PDnormals1->GetOutput();
 
-
     vtkIdType N0= mesh0->GetNumberOfCells();
-    if(verbose)
-        std::cerr << "Mesh 1 contains " << N0 << " cells and " << mesh0->GetNumberOfPoints() << " points."<< std::endl; 
+    vtkDebugMacro(<< "Mesh 1 contains " << N0 << " cells and " << mesh0->GetNumberOfPoints() << " points."); 
     vtkIdType N1= mesh1->GetNumberOfCells();
-    if(verbose)
-        std::cerr << "Mesh 2 contains " << N1 << " cells and " << mesh1->GetNumberOfPoints() << " points."<< std::endl; 
+    vtkDebugMacro(<< "Mesh 2 contains " << N1 << " cells and " << mesh1->GetNumberOfPoints() << " points."); 
 
     double x[3];
     double y[3];
@@ -116,21 +110,19 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     vtkDataArray *normals1= mesh1->GetCellData()->GetNormals();
 
     if(normals0){
-        if(verbose)
-            std::cerr << "There are " << normals0->GetNumberOfTuples() << " normals in normals0." << std::endl;
+        vtkDebugMacro(<< "There are " << normals0->GetNumberOfTuples() << " normals in normals0.");
         }
     else {
         vtkErrorMacro(<< "No normals in normals0! Aborting.");
-        exit(1);
+        return VTK_ERROR;
         }
         
     if(normals1){
-        if(verbose)
-            std::cerr << "There are " << normals1->GetNumberOfTuples() << " normals in normals1." << std::endl;
+        vtkDebugMacro(<< "There are " << normals1->GetNumberOfTuples() << " normals in normals1.");
         }
     else {
         vtkErrorMacro(<< "No normals in normals1! Aborting.");
-        exit(1);
+        return VTK_ERROR;
         }
         
 
@@ -141,37 +133,35 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     // appendPD->AddInputData(empty_mesh);
 
     vtkIdType counter= 0;
+    int abortExecute=0;
+    vtkIdType progressInterval = N0*N1/1000 + 1;
 
-    for (vtkIdType i= 0; i < N0; i++){
+    for (vtkIdType i= 0; i < N0 && !abortExecute; i++){
 
-        if(verbose)
-            std::cerr << "i: " << i << std::endl;
+	vtkDebugMacro(<< "i: " << i);
         
         vtkCell* cell0= mesh0->GetCell(i);
         if (cell0->GetCellType() != VTK_TRIANGLE){
-            if(verbose)
-                std::cerr << "Cell " << i << " is no triangle (" << vtkCellTypes::GetClassNameFromTypeId(cell0->GetCellType()) << ")." << std::endl;
+	    vtkDebugMacro(<< "Cell " << i << " is no triangle (" << vtkCellTypes::GetClassNameFromTypeId(cell0->GetCellType()) << ").");
             continue;
             }
 
         for (vtkIdType j= 0; j < N1; j++){
 
-            if(verbose)
-                std::cerr << "j: " << j << std::endl;
+            vtkDebugMacro(<< "j: " << j);
         
             vtkCell* cell1= mesh1->GetCell(j);
             if (cell1->GetCellType() != VTK_TRIANGLE){
-                if(verbose)
-                    std::cerr << "Cell " << j << " is no triangle (" << vtkCellTypes::GetClassNameFromTypeId(cell1->GetCellType()) << ")." << std::endl;
+                vtkDebugMacro(<< "Cell " << j << " is no triangle (" << vtkCellTypes::GetClassNameFromTypeId(cell1->GetCellType()) << ").");
                 continue;
                 }
 
 	    ////check if cells are nearly parallel using face-tollerance (this->FaceOrientationTolerance)
             double a=angle_in_deg_unori(normals0->GetTuple(i), normals1->GetTuple(j));
-            if(verbose)
-                std::cerr << "Angle: " << a << std::endl;
-            if (a <= this->FaceOrientationTolerance){
+            vtkDebugMacro(<< "Angle: " << a);
 
+	    ////if faces are nearly parallel:
+            if (a <= this->FaceOrientationTolerance){
                 ////find intersections of edges -> add to out point list
                 vtkIdType m0= cell0->GetNumberOfEdges();
                 vtkIdType m1= cell1->GetNumberOfEdges();
@@ -204,9 +194,8 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 		mergePoints->InitPointInsertion(point_pd->GetPoints(), mesh0->GetBounds()); //either mesh0->GetBounds() or mesh1->GetBounds() should do as no points from outside the intersection of mesh0 and mesh1 should appear!
 
 
-                if(verbose)
-                    std::cerr << "Checking intersections... " << std::endl;
-                
+                vtkDebugMacro(<< "Checking intersections... ");
+		////so far no check for coplanarity, this could speed up the filter quite a bit for e.g. marching cubes surfaces.
                 for (vtkIdType k= 0; k < m0; k++){
                     edge0= cell0->GetEdge(k);
                     for (vtkIdType l= 0; l < m1; l++){
@@ -221,31 +210,27 @@ int vtkCoplanarSurfaceExtractor::RequestData(
                         double b=angle_in_deg_unori(l00, l01, l10, l11);
                         if (b <= this->LineOrientationTolerance){
                             //if (b == 0){
-                            if(verbose)
-                                std::cerr << "Angle: " << b << " No intersection considered!" << std::endl;
+                            vtkDebugMacro(<< "Angle: " << b << " No intersection considered!");
                             continue;
                             }
 
                         ////get closest points between lines
                         double d= vtkLine::DistanceBetweenLineSegments(l00, l01, l10, l11, p0, p1, t1, t2);//return value is the shortest distance squared between the two line-segments.
-                        if(verbose)
-                            std::cerr << "Distance: " << d << std::endl;
+                        vtkDebugMacro(<< "Distance: " << d);
 
 			int added;
                         if(point_in_both_cells(p0, cell0, cell1, this->DistanceTolerance)){
                             vtkIdType id;
                             added= mergePoints->InsertUniquePoint(p0,id);
 			    if(added)
-                                if(verbose)
-                                    std::cerr << "Added point: " << p0[0] << ", " << p0[1] << ", " << p0[2]  << std::endl;
+                                vtkDebugMacro(<< "Added point: " << p0[0] << ", " << p0[1] << ", " << p0[2]);
                             }
 			////only add one point -> therefore else if!
                         else if(point_in_both_cells(p1, cell0, cell1, this->DistanceTolerance)){
                             vtkIdType id;
                             added= mergePoints->InsertUniquePoint(p1,id);
 			    if(added)
-                                if(verbose)
-                                    std::cerr << "Added point: " << p1[0] << ", " << p1[1] << ", " << p1[2]  << std::endl;
+				vtkDebugMacro(<< "Added point: " << p1[0] << ", " << p1[1] << ", " << p1[2]);
                             }//if(point_in_both_cells
                         }//l
                     }//k
@@ -270,8 +255,7 @@ int vtkCoplanarSurfaceExtractor::RequestData(
                     point_pd->GetPoints()->GetPoint(2, x2);
 
                     z_normal_of_3points(x0, x1, x2, n, angle, N);
-		    if(verbose)
-                        std::cerr << "N: " << N[0] << ", " << N[1] << ", " << N[2] << "; angle: " << angle << std::endl;
+		    vtkDebugMacro(<< "N: " << N[0] << ", " << N[1] << ", " << N[2] << "; angle: " << angle);
   
 
 		    if(this->MeshMode== VTK_USE_DELAUNAY2D){
@@ -298,8 +282,7 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 
                         appendPD->AddInputData(out_mesh);
 
-                        if(verbose)
-                            std::cerr << "Created delaunay-2d mesh with: " << out_mesh->GetNumberOfPoints() << " points and " << out_mesh->GetNumberOfCells() << " cells." << std::endl;
+                        vtkDebugMacro(<< "Created delaunay-2d mesh with: " << out_mesh->GetNumberOfPoints() << " points and " << out_mesh->GetNumberOfCells() << " cells.");
                         }
 		    else{//!useDelaunay2D
 
@@ -336,23 +319,20 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 
                         appendPD->AddInputData(out_mesh);
 
-                        if(verbose)
-                            std::cerr << "Created vtkConvexHull2D polygon with: " << out_mesh->GetNumberOfPoints() << " points and " << out_mesh->GetNumberOfCells() << " cells." << std::endl;
+                        vtkDebugMacro(<< "Created vtkConvexHull2D polygon with: " << out_mesh->GetNumberOfPoints() << " points and " << out_mesh->GetNumberOfCells() << " cells.");
                         }//useDelaunay2D
                     }
                 else if(point_pd->GetPoints()->GetNumberOfPoints() > 0){
-                    if(verbose)
-                        std::cerr << "Only " << point_pd->GetNumberOfPoints() << " points found. This can happen!" << std::endl;
+                    vtkDebugMacro(<< "Only " << point_pd->GetNumberOfPoints() << " points found. This can happen!");
                     }
 
                 }//coplanar cells
             //// progress | abort
 	    counter++;
-	    if(!(j%10000)){
+	    if(!(counter%progressInterval)){
                 //printf("\r#c0: %9lld, #c1: %9lld; %6.2f%%", i, j, (counter)*100.0/(N0*N1));
                 this->UpdateProgress(static_cast<double>(counter)/N0/N1);
-                if (this->GetAbortExecute())
-                    break;
+		abortExecute = this->GetAbortExecute();
                 }
 
             }//cell1

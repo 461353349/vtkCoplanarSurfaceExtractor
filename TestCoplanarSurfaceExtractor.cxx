@@ -31,7 +31,7 @@ void ProgressFunction( vtkObject* caller, long unsigned int eventId, void* clien
 int main(int argc, char* argv[]){
 
 
-    if( argc != 7 )
+    if( argc != 8 )
 	{
 	std::cerr << "Usage: " << argv[0];
 	std::cerr << " inputMesh0";
@@ -39,6 +39,7 @@ int main(int argc, char* argv[]){
 	std::cerr << " outputMesh";
 	std::cerr << " d-tolarance a-tolarance";
 	std::cerr << " vtkConvexHull2D=0|vtkDelaunay2D=1";
+	std::cerr << " debug";
 	std::cerr << std::endl;  
 	return EXIT_FAILURE;
 	}
@@ -69,6 +70,7 @@ int main(int argc, char* argv[]){
 
     int useDelaunay2D= atoi(argv[6]);
 
+    //vtkObject::SetGlobalWarningDisplay(1);
 
     vtkSmartPointer<vtkXMLPolyDataReader> reader0 = vtkSmartPointer<vtkXMLPolyDataReader>::New();
  
@@ -95,6 +97,10 @@ int main(int argc, char* argv[]){
     else
         filter->SetMeshMode(VTK_USE_CONVEXHULL2D);
 
+    if(atoi(argv[7])){
+	filter->GlobalWarningDisplayOn();
+	filter->DebugOn();
+	}
 
     if(P_VERBOSE) filter->AddObserver(vtkCommand::ProgressEvent, progressCallback);
     if(P_VERBOSE) filter->Print(std::cerr);
