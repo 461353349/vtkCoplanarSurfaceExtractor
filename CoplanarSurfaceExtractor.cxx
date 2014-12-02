@@ -68,6 +68,8 @@ int main(int argc, char* argv[]){
     double f_tol= atof(argv[5]);
     double l_tol= f_tol; //for now let face-tol == line-tol
 
+    int useDelaunay2D= atoi(argv[6]);
+
     //vtkObject::SetGlobalWarningDisplay(1);
 
     vtkSmartPointer<vtkXMLPolyDataReader> reader0 = vtkSmartPointer<vtkXMLPolyDataReader>::New();
@@ -95,7 +97,7 @@ int main(int argc, char* argv[]){
     else
         filter->SetMeshMode(VTK_USE_CONVEXHULL2D);
 
-    if(atoi(argv[7])){//only works if CMAKE_BUILD_TYPE: Debug
+    if(atoi(argv[7])){
 	filter->GlobalWarningDisplayOn();
 	filter->DebugOn();
 	}

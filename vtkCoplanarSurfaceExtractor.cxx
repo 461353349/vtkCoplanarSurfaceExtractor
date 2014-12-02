@@ -128,9 +128,9 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 
 
     vtkSmartPointer<vtkAppendPolyData> appendPD= vtkSmartPointer<vtkAppendPolyData>::New();
-    ////needed for disjunct sets??? test!!!
-    // vtkSmartPointer<vtkPolyData> empty_mesh= vtkSmartPointer<vtkPolyData>::New();
-    // appendPD->AddInputData(empty_mesh);
+    ////inital input for vtkAppendPolyData needed in the case of disjunct sets!!!
+    vtkSmartPointer<vtkPolyData> empty_mesh= vtkSmartPointer<vtkPolyData>::New();
+    appendPD->AddInputData(empty_mesh);
 
     vtkIdType counter= 0;
     int abortExecute=0;
@@ -377,45 +377,41 @@ void vtkCoplanarSurfaceExtractor::PrintSelf(ostream& os, vtkIndent indent)
 
 
 
-int vtkCoplanarSurfaceExtractor::are_coincident(double x[3], double y[3]){
+// int vtkCoplanarSurfaceExtractor::are_coincident(double x[3], double y[3]){
 
-    if((x[0]==y[0])&&(x[1]==y[1])&&(x[2]==y[2]))
-        return 1;
-    else
-        return 0;
-    }
+//     if((x[0]==y[0])&&(x[1]==y[1])&&(x[2]==y[2]))
+//         return 1;
+//     else
+//         return 0;
+//     }
 
-double vtkCoplanarSurfaceExtractor::angle_in_deg(double a[3], double b[3]){
-    //std::cerr << "n0: " << a[0] << ", " << a[1] << ", " << a[2] << "; n1: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
-    vtkMath::Normalize(a);
-    vtkMath::Normalize(b);
-    return(acos(vtkMath::Dot(a, b))*180/vtkMath::Pi());
-    }
+// double vtkCoplanarSurfaceExtractor::angle_in_deg(double a[3], double b[3]){
+//     vtkMath::Normalize(a);
+//     vtkMath::Normalize(b);
+//     return(acos(vtkMath::Dot(a, b))*180/vtkMath::Pi());
+//     }
 
-double vtkCoplanarSurfaceExtractor::angle_in_deg(double a0[3], double a1[3], double b0[3], double b1[3]){
-    //std::cerr << "n0: " << a[0] << ", " << a[1] << ", " << a[2] << "; n1: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
-    double a[3];
-    double b[3];    
-    vtkMath::Subtract(a0, a1, a);
-    vtkMath::Subtract(b0, b1, b);
-    vtkMath::Normalize(a);
-    vtkMath::Normalize(b);
-    return(acos(vtkMath::Dot(a, b))*180/vtkMath::Pi());
-    }
+// double vtkCoplanarSurfaceExtractor::angle_in_deg(double a0[3], double a1[3], double b0[3], double b1[3]){
+//     double a[3];
+//     double b[3];    
+//     vtkMath::Subtract(a0, a1, a);
+//     vtkMath::Subtract(b0, b1, b);
+//     vtkMath::Normalize(a);
+//     vtkMath::Normalize(b);
+//     return(acos(vtkMath::Dot(a, b))*180/vtkMath::Pi());
+//     }
 
-double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(double a[3], double b[3]){
-    //std::cerr << "n0: " << a[0] << ", " << a[1] << ", " << a[2] << "; n1: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
-    vtkMath::Normalize(a);
-    vtkMath::Normalize(b);
-    double t=acos(vtkMath::Dot(a, b))*180/vtkMath::Pi();
-    if(t >= 90)
-        return(180-t);
-    else
-        return(t);
-    }
+// double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(double a[3], double b[3]){
+//     vtkMath::Normalize(a);
+//     vtkMath::Normalize(b);
+//     double t=acos(vtkMath::Dot(a, b))*180/vtkMath::Pi();
+//     if(t >= 90)
+//         return(180-t);
+//     else
+//         return(t);
+//     }
 
 double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(double a0[3], double a1[3], double b0[3], double b1[3]){
-    //std::cerr << "n0: " << a[0] << ", " << a[1] << ", " << a[2] << "; n1: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
     double a[3];
     double b[3];    
     vtkMath::Subtract(a0, a1, a);
@@ -434,8 +430,12 @@ int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], doub
     //////i.e. are parallel and have the same displacement from origin
 
     ////check if cells are nearly parallel using face-tollerance
-    vtkMath::Normalize(n0);
-    vtkMath::Normalize(n1);
+
+    ////normalization commented out as it gives a 4x speed-up
+    ////this can be done here because the inputs are only normals from vtkPolyDataNormals
+    ////which employs vtkPolygon::ComputeNormal->vtkTriangle::ComputeNormal->vtkTriangle.h which normalizes with double precision
+    // vtkMath::Normalize(n0);
+    // vtkMath::Normalize(n1);
     double t=acos(vtkMath::Dot(n0, n1))*180/vtkMath::Pi();
     if(t >= 90)
         t=180-t;
@@ -470,8 +470,6 @@ int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell
     exit(1);
   }
 
-  //if((res0 > 0) && (res1 > 0)){
-  ////or make return val dep on dist2 with a tolarance
   if((dist0 < d_tol) && (dist1 < d_tol)){
     return 1;
   }
@@ -479,12 +477,9 @@ int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell
     return 0;
 }
 
-
-
 void vtkCoplanarSurfaceExtractor::z_normal_of_3points(double a0[3], double a1[3], double a2[3], double n[3], double &angle, double N[3]){
     double a[3];
     double b[3];
-    //double n[3];
     double z[3]={0,0,1};
 
     vtkMath::Subtract(a0, a1, a);
@@ -495,13 +490,8 @@ void vtkCoplanarSurfaceExtractor::z_normal_of_3points(double a0[3], double a1[3]
     vtkMath::Normalize(N);//should not be necessary, just to be on the save side
     vtkMath::Normalize(z);
 
-    //angle= acos(vtkMath::Dot(n, z));
     angle= acos(vtkMath::Dot(n, z))*180/vtkMath::Pi(); //RotateWXYZ(angle, N) expects angle expected in deg!!!!!!!
     
-    // std::cerr << "a: " << a[0] << ", " << a[1] << ", " << a[2] << "; b: " << b[0] << ", " << b[1] << ", " << b[2] << std::endl;
-    //  std::cerr << "n: " << n[0] << ", " << n[1] << ", " << n[2] << std::endl;
-    // std::cerr << "N: " << N[0] << ", " << N[1] << ", " << N[2] << "; angle: " << angle << std::endl;
-
     return;
     }
 
