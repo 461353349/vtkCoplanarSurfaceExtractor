@@ -431,11 +431,11 @@ int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], doub
 
     ////check if cells are nearly parallel using face-tollerance
 
-    ////normalization commented out as it gives a 4x speed-up
-    ////this can be done here because the inputs are only normals from vtkPolyDataNormals
-    ////which employs vtkPolygon::ComputeNormal->vtkTriangle::ComputeNormal->vtkTriangle.h which normalizes with double precision
-    // vtkMath::Normalize(n0);
-    // vtkMath::Normalize(n1);
+    ////although vtkPolyDataNormals employs vtkPolygon::ComputeNormal->vtkTriangle::ComputeNormal->vtkTriangle.h 
+    ////which normalizes with double precision, commenting vtkMath::Normalize here yields a 4x speed-up but causes failures during tests
+    ////so left as is
+    vtkMath::Normalize(n0);
+    vtkMath::Normalize(n1);
     double t=acos(vtkMath::Dot(n0, n1))*180/vtkMath::Pi();
     if(t >= 90)
         t=180-t;
