@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
 	std::cerr << " inputMesh0";
 	std::cerr << " inputMesh1";
 	std::cerr << " outputMesh";
-	std::cerr << " d-tolarance a-tolarance";
+	std::cerr << " d-tolerance a-tolerance";
 	std::cerr << " vtkConvexHull2D=0|vtkDelaunay2D=1";
 	std::cerr << " debug";
 	std::cerr << std::endl;  

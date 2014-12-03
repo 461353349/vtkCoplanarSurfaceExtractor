@@ -12,6 +12,8 @@
 
 
 #include "vtkCoplanarSurfaceExtractor.h"
+#include "testing/vtkHausdorffDistancePointSetFilter.h"
+#include <vtkFieldData.h>
 
 
 
@@ -36,10 +38,10 @@ int main(int argc, char* argv[]){
 	std::cerr << "Usage: " << argv[0];
 	std::cerr << " inputMesh0";
 	std::cerr << " inputMesh1";
-	std::cerr << " outputMesh";
-	std::cerr << " d-tolarance a-tolarance";
+	std::cerr << " testMesh";
+	std::cerr << " d-tolerance a-tolerance";
 	std::cerr << " vtkConvexHull2D=0|vtkDelaunay2D=1";
-	std::cerr << " debug";
+	std::cerr << " testing-tolerance";
 	std::cerr << std::endl;  
 	return EXIT_FAILURE;
 	}
@@ -95,24 +97,67 @@ int main(int argc, char* argv[]){
     else
         filter->SetMeshMode(VTK_USE_CONVEXHULL2D);
 
-    if(atoi(argv[7])){//only works if CMAKE_BUILD_TYPE: Debug
-	filter->GlobalWarningDisplayOn();
-	filter->DebugOn();
-	}
-
-    if(P_VERBOSE) filter->AddObserver(vtkCommand::ProgressEvent, progressCallback);
-    if(P_VERBOSE) filter->Print(std::cerr);
     filter->Update();
-    if(P_VERBOSE) std::cerr  << std::endl << "done." << std::endl;
 
-    vtkSmartPointer<vtkXMLPolyDataWriter> Pwriter = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+
+    ///////////// testing ///////////
+    double tol= atof(argv[7]);
+    bool tresult= true;
+
+    //////load dataset for comparison
+    vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+    reader->SetFileName(argv[3]);
+    reader->Update();
+
+    //////compare filter output and test dataset
+    vtkSmartPointer<vtkHausdorffDistancePointSetFilter> HDdistance = vtkSmartPointer<vtkHausdorffDistancePointSetFilter>::New();
+    HDdistance->SetInputConnection(0, reader->GetOutputPort());
+    HDdistance->SetInputConnection(1, filter->GetOutputPort());
+    HDdistance->SetTargetDistanceMethod( vtkHausdorffDistancePointSetFilter::POINT_TO_POINT );
+    HDdistance->Update();
  
-    Pwriter->SetFileName(argv[3]);
-    Pwriter->SetInputConnection(filter->GetOutputPort());
-    Pwriter->Update();
+    printf("p2p: HausdorffDistance: %e; RelativeDistanceAtoB: %e; RelativeDistanceBtoA: %e\n", 
+	static_cast<vtkPointSet*>(HDdistance->GetOutput(0))->GetFieldData()->GetArray("HausdorffDistance")->GetComponent(0,0),
+	HDdistance->GetOutputDataObject(0)->GetFieldData()->GetArray("RelativeDistanceAtoB")->GetComponent(0,0),
+	HDdistance->GetOutputDataObject(1)->GetFieldData()->GetArray("RelativeDistanceBtoA")->GetComponent(0,0)
+	);
+
+    // vtkSmartPointer<vtkXMLPolyDataWriter> Pwriter = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    // Pwriter->SetFileName("HD_out_p2p.vtp");
+    // Pwriter->SetInputConnection(HDdistance->GetOutputPort());
+    // Pwriter->Update();
+
+    if(tol < static_cast<vtkPointSet*>(HDdistance->GetOutput(0))->GetFieldData()->GetArray("HausdorffDistance")->GetComponent(0,0))
+	tresult= false;
+    if(tol < HDdistance->GetOutputDataObject(0)->GetFieldData()->GetArray("RelativeDistanceAtoB")->GetComponent(0,0))
+	tresult= false;	
+    if(tol < HDdistance->GetOutputDataObject(1)->GetFieldData()->GetArray("RelativeDistanceBtoA")->GetComponent(0,0))
+	tresult= false;
+
+    HDdistance->SetTargetDistanceMethod( vtkHausdorffDistancePointSetFilter::POINT_TO_CELL );
+    HDdistance->Update();
+
+    printf("p2c: HausdorffDistance: %e; RelativeDistanceAtoB: %e; RelativeDistanceBtoA: %e\n", 
+	static_cast<vtkPointSet*>(HDdistance->GetOutput(0))->GetFieldData()->GetArray("HausdorffDistance")->GetComponent(0,0),
+	HDdistance->GetOutputDataObject(0)->GetFieldData()->GetArray("RelativeDistanceAtoB")->GetComponent(0,0),
+	HDdistance->GetOutputDataObject(1)->GetFieldData()->GetArray("RelativeDistanceBtoA")->GetComponent(0,0)
+	);
+
+    // Pwriter->SetFileName("HD_out_p2c.vtp");
+    // Pwriter->SetInputConnection(HDdistance->GetOutputPort());
+    // Pwriter->Update();
+
+    if(tol < static_cast<vtkPointSet*>(HDdistance->GetOutput(0))->GetFieldData()->GetArray("HausdorffDistance")->GetComponent(0,0))
+	tresult= false;
+    if(tol < HDdistance->GetOutputDataObject(0)->GetFieldData()->GetArray("RelativeDistanceAtoB")->GetComponent(0,0))
+	tresult= false;
+    if(tol < HDdistance->GetOutputDataObject(1)->GetFieldData()->GetArray("RelativeDistanceBtoA")->GetComponent(0,0))
+	tresult= false;
 
 
+    if(tresult)
+	return EXIT_SUCCESS;
+    else
+	return EXIT_FAILURE;
 
-
-    return EXIT_SUCCESS;
     }

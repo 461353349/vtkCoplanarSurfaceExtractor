@@ -2,9 +2,9 @@
 
 todo:
 
-- create test tasks in cmake
--- run tests
+--- convert from Dart to CTest http://www.vtk.org/Wiki/CMake/Testing_With_CTest
 - mention (optimization for big meshes) option to just run on "distance output" as shown in the particle example
 - final clean-up
 - introduce ShallowCopy for appending
-- make TestCoplanarSurfaceExtractor.cxx just be a test, not an example
+- check copyright info
+

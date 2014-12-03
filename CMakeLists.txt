@@ -43,7 +43,7 @@ SET(Libraries
 #You can build more than one executable per project
 SET(CurrentExe "TestCoplanarSurfaceExtractor")
 ADD_EXECUTABLE(${CurrentExe}
-  vtkCoplanarSurfaceExtractor.cxx
+  vtkCoplanarSurfaceExtractor.cxx testing/vtkHausdorffDistancePointSetFilter.cxx
   TestCoplanarSurfaceExtractor.cxx)
 TARGET_LINK_LIBRARIES(${CurrentExe} ${Libraries})
 
@@ -53,8 +53,15 @@ TARGET_LINK_LIBRARIES(${CurrentExe} ${Libraries})
 #project or an external executable.  After that list any args that are needed
 #for this test.  Include as many tests as you like.  If your project doesn't have
 #any tests you can comment out or delete the following line.
-ADD_TEST(TestCoplanarSurfaceExtractor ${CurrentExe})
+ADD_TEST(NAME vtkCoplanarSurfaceExtractor_success_test_CH WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/testing/triangle_tests/ COMMAND TestCoplanarSurfaceExtractor triangles_overlaping_3D_03_0001.vtp triangles_overlaping_3D_03_0003.vtp triangles_overlaping_3D_03_0001-0003_right.vtp 0.0001 0.0001 0 0.0001)
 
+ADD_TEST(NAME vtkCoplanarSurfaceExtractor_fail_test_CH WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/testing/triangle_tests/ COMMAND TestCoplanarSurfaceExtractor triangles_overlaping_3D_03_0001.vtp triangles_overlaping_3D_03_0003.vtp triangles_overlaping_3D_03_0001-0003_wrong.vtp 0.0001 0.0001 0 0.0001)
+SET_TESTS_PROPERTIES(vtkCoplanarSurfaceExtractor_fail_test_CH PROPERTIES WILL_FAIL TRUE)
+
+ADD_TEST(NAME vtkCoplanarSurfaceExtractor_success_test_DL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/testing/triangle_tests/ COMMAND TestCoplanarSurfaceExtractor triangles_overlaping_3D_03_0001.vtp triangles_overlaping_3D_03_0003.vtp triangles_overlaping_3D_03_0001-0003_right.vtp 0.0001 0.0001 1 0.0001)
+
+ADD_TEST(NAME vtkCoplanarSurfaceExtractor_fail_test_DL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/testing/triangle_tests/ COMMAND TestCoplanarSurfaceExtractor triangles_overlaping_3D_03_0001.vtp triangles_overlaping_3D_03_0003.vtp triangles_overlaping_3D_03_0001-0003_wrong.vtp 0.0001 0.0001 1 0.0001)
+SET_TESTS_PROPERTIES(vtkCoplanarSurfaceExtractor_fail_test_DL PROPERTIES WILL_FAIL TRUE)
 
 
 OPTION( BUILD_EXAMPLE
