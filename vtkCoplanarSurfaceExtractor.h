@@ -61,6 +61,7 @@ private:
   vtkCoplanarSurfaceExtractor(const vtkCoplanarSurfaceExtractor&);  // Not implemented.
   void operator=(const vtkCoplanarSurfaceExtractor&);  // Not implemented.
 
+  double SafeAcos (double x);
   /* int are_coincident(double x[3], double y[3]); */
   /* double angle_in_deg(double a[3], double b[3]); */
   /* double angle_in_deg(double a0[3], double a1[3], double b0[3], double b1[3]); */

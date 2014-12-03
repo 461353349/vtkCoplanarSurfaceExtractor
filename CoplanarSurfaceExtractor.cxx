@@ -107,6 +107,9 @@ int main(int argc, char* argv[]){
     filter->Update();
     if(P_VERBOSE) std::cerr  << std::endl << "done." << std::endl;
 
+    std::cerr << "Created mesh with: " << filter->GetOutput()->GetNumberOfPoints() << " points and " << filter->GetOutput()->GetNumberOfCells() << " cells." << std::endl;
+
+
     vtkSmartPointer<vtkXMLPolyDataWriter> Pwriter = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
  
     Pwriter->SetFileName(argv[3]);
