@@ -4,15 +4,7 @@ todo:
 
 - create test tasks in cmake
 -- run tests
-- add (optimization for big meshes) option to just run on "distance output" as shown in the particle example
-- add verbose-option or remove verbose: vtkDebugMacro(
-- clean-up
-- comment vtkMath::Normalize if vtkNormalFilter already does normalization
---vtkPolyDataNormals->vtkPolygon::ComputeNormal->vtkTriangle::ComputeNormal->vtkTriangle.h which normalizes with double precision
+- mention (optimization for big meshes) option to just run on "distance output" as shown in the particle example
+- final clean-up
 - introduce ShallowCopy for appending
-- check vtkConvexHull2D without modified CMakeList.txt
-
-- debug scaled output of ~/vtk/simple/build_vtk6+itk4_iana0/copla-surf_bool-op_06 triangles_overlaping_3D_03_0001.vtp triangles_overlaping_3D_03_0003.vtp triangles_overlaping_3D_03_0001-0003_.vtp 0.0001 0.0001 0
-Using vtkConvexHull2D.
-
 - make TestCoplanarSurfaceExtractor.cxx just be a test, not an example

@@ -156,19 +156,12 @@ int vtkCoplanarSurfaceExtractor::RequestData(
                 continue;
                 }
 
+
 	    //////cells are coplanar, if the containing planes are identical, i.e. are parallel and have the same displacement from origin
 	    ////check if cells are nearly parallel using face-tollerance (this->FaceOrientationTolerance)
-            // double a=angle_in_deg_unori(normals0->GetTuple(i), normals1->GetTuple(j));
-            // vtkDebugMacro(<< "Angle: " << a);
-
 	    ////check if containing planes have similar displacement from origin
-	    // double pd= plane_displacement_difference(normals0->GetTuple(i), normals1->GetTuple(j));
-
 	    ////if faces are nearly coplanar:
             if (coplanar_check(normals0->GetTuple(i), normals1->GetTuple(j), cell0->GetPoints()->GetPoint(0), cell1->GetPoints()->GetPoint(0), this->FaceOrientationTolerance, this->DistanceTolerance)){
-	    
-	    ////if faces are nearly parallel:
-            //if (a <= this->FaceOrientationTolerance){
                 ////find intersections of edges -> add to out point list
                 vtkIdType m0= cell0->GetNumberOfEdges();
                 vtkIdType m1= cell1->GetNumberOfEdges();
@@ -308,6 +301,8 @@ int vtkCoplanarSurfaceExtractor::RequestData(
 
                         vtkSmartPointer<vtkConvexHull2D> hull2D = vtkSmartPointer<vtkConvexHull2D>::New();
                         hull2D->SetInputData(xform0->GetOutput());
+			hull2D->SetMinHullSizeInWorld(0.0);
+			hull2D->OutlineOff();
                         hull2D->Update();
 
                         ////first rotate back, then translate back
@@ -496,15 +491,15 @@ int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell
 void vtkCoplanarSurfaceExtractor::z_normal_of_3points(double a0[3], double a1[3], double a2[3], double n[3], double &angle, double N[3]){
     double a[3];
     double b[3];
-    double z[3]={0,0,1};
+    const double z[3]={0.0,0.0,1.0}; //rotation into xy-plane
 
     vtkMath::Subtract(a0, a1, a);
     vtkMath::Subtract(a0, a2, b);
     vtkMath::Cross(a, b, n);
-    vtkMath::Cross(n, z, N);
     vtkMath::Normalize(n);
-    vtkMath::Normalize(N);//should not be necessary, just to be on the save side
-    vtkMath::Normalize(z);
+    //vtkMath::Normalize(z);//not necessary for {0.0,0.0,1.0}
+    vtkMath::Cross(n, z, N);
+    //vtkMath::Normalize(N);//should not be necessary
 
     angle= acos(vtkMath::Dot(n, z))*180/vtkMath::Pi(); //RotateWXYZ(angle, N) expects angle expected in deg!!!!!!!
     
