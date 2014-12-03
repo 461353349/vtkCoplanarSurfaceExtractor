@@ -380,11 +380,11 @@ void vtkCoplanarSurfaceExtractor::PrintSelf(ostream& os, vtkIndent indent)
 double vtkCoplanarSurfaceExtractor::SafeAcos (double x){
     if (x < -1.0){
 	x = -1.0;
-	fprintf(stderr, "SafeAcos: x==%e < -1.0\n", x);
+	fprintf(stderr, "   SafeAcos: x + 1.0 == %e < 0.0\n", x + 1.0);
 	}
     else if (x > 1.0){
 	x = 1.0;
-	fprintf(stderr, "SafeAcos: x==%e > +1.0\n", x);
+	fprintf(stderr, "   SafeAcos: x - 1.0 == %e > 0.0\n", x - 1.0);
 	}	
     return acos (x) ;
     }
@@ -443,30 +443,23 @@ int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], doub
 
     ////check if cells are nearly parallel using face-tollerance
 
-    ////although vtkPolyDataNormals employs vtkPolygon::ComputeNormal->vtkTriangle::ComputeNormal->vtkTriangle.h 
-    ////which normalizes with double precision, commenting vtkMath::Normalize here yields a 4x speed-up but causes failures during tests
-    ////so left as is
-    double l0= vtkMath::Norm(n0);
-    //double l1= vtkMath::Normalize(n0);
-    //double l1= vtkMath::Norm(n0);
-    fprintf(stderr, "Size difference n0: %e", l0);
-
-    l0= vtkMath::Norm(n1);
-    //l1= vtkMath::Normalize(n1);
-    //l1= vtkMath::Norm(n1);
-    fprintf(stderr, "; n1: %e\n", l0);
-
-    fprintf(stderr, "n0*n1: %e; isNaN: %d; acos: %e\n",vtkMath::Dot(n0, n1), vtkMath::IsNan(vtkMath::Dot(n0, n1)), SafeAcos(vtkMath::Dot(n0, n1)));
-   
+    // vtkMath::Normalize(n0); //see note below
+    // vtkMath::Normalize(n1); //see note below
     double t= SafeAcos(vtkMath::Dot(n0, n1))*180/vtkMath::Pi();
     if(t >= 90)
         t=180-t;
+    ////normalization commented out as it gives a 4x speed-up
+    ////this can be done here because the inputs are only normals from vtkPolyDataNormals
+    ////which employs vtkPolygon::ComputeNormal->vtkTriangle::ComputeNormal->vtkTriangle.h which normalizes with double precision
+    ////HOWEVER, the normalization is different and without vtkMath::Normalize values just outside [-1.0; +1.0] can occure that are not even visible with %e after substraction of +/-1.0
+    ////THERFORE, SafeAcos was introduced, http://stackoverflow.com/questions/8489792/is-it-legal-to-take-acos-of-1-0f-or-1-0f
  
+
     ////check if containing planes have similar displacement from origin using displacement-tolerance
     ////any point in the plane projected on the plane-normal will yield the plane-origin displacement
+
     double dd= vtkMath::Dot(n0, p0) - vtkMath::Dot(n1, p1);
-    fprintf(stderr, "t: %f; dd: %f\n", t, dd);
-    
+     
     if((t < ft) && (dd < dt))
 	return 1;
     else
