@@ -100,6 +100,9 @@ int main(int argc, char* argv[]){
 
 
     ///////////// testing ///////////
+    if(!filter->GetOutput()->GetNumberOfPoints())
+        return EXIT_FAILURE;
+
     double tol= atof(argv[7]);
     bool tresult= true;
 

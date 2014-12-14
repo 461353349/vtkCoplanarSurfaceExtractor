@@ -413,7 +413,7 @@ double vtkCoplanarSurfaceExtractor::SafeAcos (double x){
 //         return(t);
 //     }
 
-double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(double a0[3], double a1[3], double b0[3], double b1[3]){
+double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(const double a0[3], const double a1[3], const double b0[3], const double b1[3]){
     double a[3];
     double b[3];    
     vtkMath::Subtract(a0, a1, a);
@@ -427,7 +427,7 @@ double vtkCoplanarSurfaceExtractor::angle_in_deg_unori(double a0[3], double a1[3
         return(t);
     }
 
-int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], double p0[3], double p1[3], double ft, double dt){
+int vtkCoplanarSurfaceExtractor::coplanar_check(const double n0[3], const double n1[3], const double p0[3], const double p1[3], const double ft, const double dt){
     //////(planar) polygons are coplanar, if the containing planes are identical, 
     //////i.e. are parallel and have the same displacement from origin
 
@@ -449,21 +449,21 @@ int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], doub
     ////any point in the plane projected on the plane-normal will yield the plane-origin displacement
 
     double dd= vtkMath::Dot(n0, p0) - vtkMath::Dot(n1, p1);
-     
+
     if((t < ft) && (dd < dt))
 	return 1;
     else
 	return 0;
     }
 
-int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell0, vtkCell *cell1, double d_tol){
-    double closestPoint[3];
+int vtkCoplanarSurfaceExtractor::point_in_both_cells(const double P0[3], vtkCell *cell0, vtkCell *cell1, const double d_tol){
+    double p0[3], closestPoint[3];
     int subId;
-    double  	pcoords[3];
+    double pcoords[3];
     double dist0, dist1;
     double weights[3];
   
-    //check also vtkCellLocator
+    p0[0]= P0[0]; p0[1]= P0[1]; p0[2]= P0[2]; 
     int res0= cell0->EvaluatePosition(p0, closestPoint, subId, pcoords, dist0, weights);     
     int res1= cell1->EvaluatePosition(p0, closestPoint, subId, pcoords, dist1, weights);     
 
@@ -483,7 +483,7 @@ int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell
         return 0;
     }
 
-void vtkCoplanarSurfaceExtractor::z_normal_of_3points(double a0[3], double a1[3], double a2[3], double n[3], double &angle, double N[3]){
+void vtkCoplanarSurfaceExtractor::z_normal_of_3points(const double a0[3], const double a1[3], const double a2[3], double n[3], double &angle, double N[3]){
     double a[3];
     double b[3];
     const double z[3]={0.0,0.0,1.0}; //rotation into xy-plane

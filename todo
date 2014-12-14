@@ -2,9 +2,6 @@
 
 todo:
 
---- convert from Dart to CTest http://www.vtk.org/Wiki/CMake/Testing_With_CTest
-- mention (optimization for big meshes) option to just run on "distance output" as shown in the particle example
-- final clean-up
 - introduce ShallowCopy for appending
-- check copyright info
+
 
