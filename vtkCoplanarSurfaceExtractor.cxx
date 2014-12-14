@@ -2,9 +2,10 @@
 //////boolean intersection operation on coplanar regions of two polydata meshes
 //////idea and implementation by Roman Grothausmann
 
-////vtkDistancePolyDataFilter and vtkPartialVolumeModeller taken as examples
+/////vtkDistancePolyDataFilter and vtkPartialVolumeModeller taken as examples
 
-////the filters own headers
+
+////the filter's own header
 #include "vtkCoplanarSurfaceExtractor.h"
 
 #include <vtkSmartPointer.h>
@@ -14,7 +15,7 @@
 #include <vtkInformationVector.h>
 #include <vtkObjectFactory.h>
 
-////headers for this specific filter
+////headers needed for this specific filter
 #include <vtkMath.h>
 #include <vtkTriangleFilter.h> 
 #include <vtkPolyDataNormals.h> 
@@ -35,7 +36,6 @@
 #include <vtkAppendPolyData.h>
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkConvexHull2D.h>
-//#include <vtkPolygon.h>
 #include <vtkGeometryFilter.h>
 
 
@@ -46,13 +46,11 @@ vtkStandardNewMacro(vtkCoplanarSurfaceExtractor);
 
 vtkCoplanarSurfaceExtractor::vtkCoplanarSurfaceExtractor(){
 
-
-    vtkDebugMacro(<<"Constructor called")
     this->SetNumberOfInputPorts(2);
 
     this->DistanceTolerance= 0.001;
     this->FaceOrientationTolerance= 0.001;
-    this->LineOrientationTolerance= this->FaceOrientationTolerance; //for now let face-tol == line-tol
+    this->LineOrientationTolerance= 0.001;
 
     this->MeshMode= VTK_USE_DELAUNAY2D;
     }
@@ -125,7 +123,6 @@ int vtkCoplanarSurfaceExtractor::RequestData(
         return VTK_ERROR;
         }
         
-
 
     vtkSmartPointer<vtkAppendPolyData> appendPD= vtkSmartPointer<vtkAppendPolyData>::New();
     ////inital input for vtkAppendPolyData needed in the case of disjunct sets!!!
@@ -353,34 +350,32 @@ int vtkCoplanarSurfaceExtractor::RequestData(
     }
 
 
-int vtkCoplanarSurfaceExtractor::FillInputPortInformation(int, vtkInformation *info)
-{
-  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData");
-  return 1;
-}
+int vtkCoplanarSurfaceExtractor::FillInputPortInformation(int, vtkInformation *info){
+    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData");
+    return 1;
+    }
 
-void vtkCoplanarSurfaceExtractor::PrintSelf(ostream& os, vtkIndent indent)
-{
-  this->Superclass::PrintSelf(os,indent);
+void vtkCoplanarSurfaceExtractor::PrintSelf(ostream& os, vtkIndent indent){
+    this->Superclass::PrintSelf(os,indent);
 
-  os << indent << "Mesh Mode: " << (this->MeshMode == VTK_USE_DELAUNAY2D ?
-                                       "Using vtkDelaunay2D.\n" : "Using vtkConvexHull2D.\n");
-  os << indent << "Distance Tolerance: " << this->DistanceTolerance << "\n";
-  os << indent << "Face Orientation Tolerance: " << this->FaceOrientationTolerance << "\n";
-  os << indent << "Line Orientation Tolerance: " << this->LineOrientationTolerance << "\n";
-}
+    os << indent << "Mesh Mode: " << (this->MeshMode == VTK_USE_DELAUNAY2D ?
+        "Using vtkDelaunay2D.\n" : "Using vtkConvexHull2D.\n");
+    os << indent << "Distance Tolerance: " << this->DistanceTolerance << "\n";
+    os << indent << "Face Orientation Tolerance: " << this->FaceOrientationTolerance << "\n";
+    os << indent << "Line Orientation Tolerance: " << this->LineOrientationTolerance << "\n";
+    }
 
 
 
 double vtkCoplanarSurfaceExtractor::SafeAcos (double x){
     if (x < -1.0){
 	x = -1.0;
-	fprintf(stderr, "   SafeAcos: x + 1.0 == %e < 0.0\n", x + 1.0);
+        vtkWarningMacro(<< "   SafeAcos: x + 1.0 == " << x + 1.0 << " < 0.0");
 	}
     else if (x > 1.0){
 	x = 1.0;
-	fprintf(stderr, "   SafeAcos: x - 1.0 == %e > 0.0\n", x - 1.0);
-	}	
+        vtkWarningMacro(<< "   SafeAcos: x - 1.0 == " << x - 1.0 << " > 0.0");
+	}
     return acos (x) ;
     }
 
@@ -462,31 +457,31 @@ int vtkCoplanarSurfaceExtractor::coplanar_check(double n0[3], double n1[3], doub
     }
 
 int vtkCoplanarSurfaceExtractor::point_in_both_cells(double p0[3], vtkCell *cell0, vtkCell *cell1, double d_tol){
-  double closestPoint[3];
-  int subId;
-  double  	pcoords[3];
-  double dist0, dist1;
-  double weights[3];
+    double closestPoint[3];
+    int subId;
+    double  	pcoords[3];
+    double dist0, dist1;
+    double weights[3];
   
-  //check also vtkCellLocator
-  int res0= cell0->EvaluatePosition(p0, closestPoint, subId, pcoords, dist0, weights);     
-  int res1= cell1->EvaluatePosition(p0, closestPoint, subId, pcoords, dist1, weights);     
+    //check also vtkCellLocator
+    int res0= cell0->EvaluatePosition(p0, closestPoint, subId, pcoords, dist0, weights);     
+    int res1= cell1->EvaluatePosition(p0, closestPoint, subId, pcoords, dist1, weights);     
 
-  if (res0 < 0){
-    std::cerr << "computational problem encountered" << std::endl;
-    exit(1);
-  }
-  if (res1 < 0){
-    std::cerr << "computational problem encountered" << std::endl;
-    exit(1);
-  }
+    if (res0 < 0){
+        vtkErrorMacro(<< "computational problem encountered");
+        exit(1);
+        }
+    if (res1 < 0){
+        vtkErrorMacro(<< "computational problem encountered");
+        exit(1);
+        }
 
-  if((dist0 < d_tol) && (dist1 < d_tol)){
-    return 1;
-  }
-  else
-    return 0;
-}
+    if((dist0 < d_tol) && (dist1 < d_tol)){
+        return 1;
+        }
+    else
+        return 0;
+    }
 
 void vtkCoplanarSurfaceExtractor::z_normal_of_3points(double a0[3], double a1[3], double a2[3], double n[3], double &angle, double N[3]){
     double a[3];

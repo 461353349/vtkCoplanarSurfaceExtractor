@@ -4,7 +4,6 @@
 
 
 #include <vtkXMLPolyDataReader.h>
-#include <vtkXMLPolyDataWriter.h>
 
 //for ProgressFunction(
 #include <vtkCallbackCommand.h>
@@ -142,10 +141,6 @@ int main(int argc, char* argv[]){
 	HDdistance->GetOutputDataObject(0)->GetFieldData()->GetArray("RelativeDistanceAtoB")->GetComponent(0,0),
 	HDdistance->GetOutputDataObject(1)->GetFieldData()->GetArray("RelativeDistanceBtoA")->GetComponent(0,0)
 	);
-
-    // Pwriter->SetFileName("HD_out_p2c.vtp");
-    // Pwriter->SetInputConnection(HDdistance->GetOutputPort());
-    // Pwriter->Update();
 
     if(tol < static_cast<vtkPointSet*>(HDdistance->GetOutput(0))->GetFieldData()->GetArray("HausdorffDistance")->GetComponent(0,0))
 	tresult= false;
