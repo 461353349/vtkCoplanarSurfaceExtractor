@@ -36,6 +36,9 @@ SET(Libraries
   ${VTK_LIBRARIES}
 )
 
+
+IF(BUILD_TESTING)
+
 #the following block of code is an example of how to build an executable in
 #cmake.  Unmodified, it will add an executable called "MyExe" to the project.
 #MyExe will be built using the files MyClass.h and MyClass.cxx, and it will
@@ -100,7 +103,7 @@ ADD_TEST(NAME particle_1335-1474_success_DL WORKING_DIRECTORY ${PROJECT_SOURCE_D
 ADD_TEST(NAME particle_1335-1474_fail_DL WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/testing/mc-surf_tests/ COMMAND TestCoplanarSurfaceExtractor particle_1335_raw.vtp particle_1474_raw.vtp particle_1335-1474.vtp 0.000000001 0.01 1 0.0001)
 SET_TESTS_PROPERTIES(particle_1335-1474_fail_DL PROPERTIES WILL_FAIL TRUE)
 
-
+ENDIF(BUILD_TESTING)
 
 OPTION( BUILD_EXAMPLE
         "Build example"
